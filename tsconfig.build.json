@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "resolveJsonModule": true,
+  "exclude": [
+    "node_modules",
+    "prisma/basapp/migrations",
+    "prisma/basapp/schema.prisma",
+    "prisma/girovision/migrations",
+    "prisma/girovision/schema.prisma",
+    "test",
+    "dist",
+    "**/*spec.ts",
+    "**/mocks/*.ts"
+  ]
+}

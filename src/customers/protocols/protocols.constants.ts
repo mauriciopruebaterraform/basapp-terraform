@@ -1,0 +1,4 @@
+export const errorCodes = {
+  LOCATION_NOT_FOUND: 'LOCATION_NOT_FOUND',
+  PROTOCOL_NOT_FOUND: 'PROTOCOL_NOT_FOUND',
+};

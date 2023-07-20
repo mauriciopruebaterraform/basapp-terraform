@@ -1,0 +1,40 @@
+import { Customer, Prisma } from '@prisma/client';
+import { EventType } from '@src/customers/event-types/entities/event-type.entity';
+import { EventStates } from '@src/event-states/entities/event-states.entity';
+import { User } from '@src/users/entities/user.entity';
+
+export class CreateEvent {
+  token?: string | null;
+  customerId?: string | null;
+  dni?: string | null;
+  from?: string | Date;
+  to?: string | Date;
+  reservationId?: string | null;
+  fullName?: string | null;
+  description?: string | null;
+  observations?: string | null;
+  lot?: string | null;
+  changeLog?: string;
+  eventStateId?: string | null;
+  eventState?: EventStates;
+  eventTypeId?: string | null;
+  eventType?: EventType;
+  userId?: string | null;
+  user?: User;
+  customer?: Customer;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  file?: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue;
+  isPermanent?: boolean;
+  isCopy?: boolean;
+  statesmanId?: string | null;
+  authorizedUserId?: string | null;
+  monitorId?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  patent?: string | null;
+  qrCode?: string | null;
+  qrPending?: boolean;
+  externalId?: string | null;
+  created: number;
+}

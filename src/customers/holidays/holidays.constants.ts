@@ -1,0 +1,4 @@
+export const errorCodes = {
+  HOLIDAY_NOT_FOUND: 'HOLIDAY_NOT_FOUND',
+  HOLIDAY_EXIST: 'HOLIDAY_EXIST',
+};

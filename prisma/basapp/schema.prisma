@@ -1,0 +1,1001 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../node_modules/.prisma/client"
+}
+
+enum Role {
+  admin
+  statesman
+  monitoring
+  user
+}
+
+enum CustomerType {
+  business
+  government
+}
+
+enum NotificationType {
+  massive
+  panic
+  authorization
+  reservation
+  user
+  monitoring
+  alert
+  event
+}
+
+model Permission {
+  id         String  @id @default(uuid()) @db.VarChar(36)
+  action     String  @unique
+  name       String
+  category   String
+  monitoring Boolean @default(false)
+  statesman  Boolean @default(false)
+}
+
+model User {
+  id                               String                      @id @default(uuid()) @db.VarChar(36)
+  username                         String
+  password                         String
+  firstName                        String
+  lastName                         String
+  fullName                         String
+  lot                              String?
+  image                            Json?
+  role                             Role                        @default(user)
+  active                           Boolean                     @default(true)
+  customerId                       String?                     @db.VarChar(36)
+  customerType                     CustomerType?
+  createdAt                        DateTime                    @default(now())
+  updatedAt                        DateTime                    @default(now()) @updatedAt
+  pushId                           String?
+  emergencyNumber                  String?
+  alarmNumber                      String?
+  lastAccessToMenu                 DateTime?
+  status                           String?
+  homeAddress                      Json?
+  workAddress                      Json?
+  idCard                           String?
+  verificationCode                 String?
+  removed                          Boolean                     @default(false)
+  removedAt                        DateTime?
+  lastStateUpdatedTime             DateTime?
+  stateUpdatedUserId               String?                     @db.VarChar(36)
+  stateUpdatedUser                 User?                       @relation("UserStateUpdatedUser", fields: [stateUpdatedUserId], references: [id])
+  comment                          String?                     @db.Text()
+  authorizedUserId                 String?                     @db.VarChar(36)
+  authorizedUser                   AuthorizedUser?             @relation("UserAuthorizedUser", fields: [authorizedUserId], references: [id])
+  passwordRecoveryToken            PasswordRecoveryToken?
+  customer                         Customer?                   @relation(fields: [customerId], references: [id])
+  customersUpdatedBy               Customer[]                  @relation("updateBy")
+  updatedById                      String?                     @db.VarChar(36)
+  updatedBy                        User?                       @relation("UserUpdateBy", fields: [updatedById], references: [id])
+  usersUpdated                     User[]                      @relation("UserUpdateBy")
+  userPermissions                  UserPermission?
+  customerIntegrationUpdated       CustomerIntegration[]       @relation("CustomerIntegrationUserUpdateBy")
+  customerSettingsUpdated          CustomerSettings[]          @relation("CustomerSettingsUserUpdateBy")
+  customerEventCategoryUpdated     CustomerEventCategory[]
+  eventTypeUpdated                 EventType[]
+  cameras                          Camera[]
+  locations                        Location[]
+  protocols                        Protocol[]
+  usefulInformations               UsefulInformation[]
+  lots                             Lot[]
+  reservationModes                 ReservationMode[]
+  authorizedUsers                  AuthorizedUser[]
+  userStateUpdatedUser             User[]                      @relation("UserStateUpdatedUser")
+  events                           Event[]                     @relation("EventUser")
+  eventsMonitor                    Event[]                     @relation("EventUserMonitor")
+  eventsStatesman                  Event[]                     @relation("EventUserStatesman")
+  reservationCreatedBy             Reservation[]               @relation("ReservationCreatedBy")
+  reservations                     Reservation[]               @relation("ReservationUser")
+  eventAuthorizationRequestMonitor EventAuthorizationRequest[] @relation("EventAuthorizationRequestMonitor")
+  eventAuthorizationRequestUser    EventAuthorizationRequest[] @relation("EventAuthorizationRequestUser")
+  alerts                           Alert[]
+  notifications                    Notification[]              @relation("NotificationSenderUser")
+  contactUsers                     Contact[]                   @relation("ContactContactUser")
+  contacts                         Contact[]                   @relation("ContactUser")
+  notificationUsers                NotificationUser[]
+  reservationGuests                ReservationGuests[]
+  neighborhoodAlarms               NeighborhoodAlarm[]
+  neighborhoodAlarmUsers           NeighborhoodAlarmUsers[]
+  userDeleted                      UserDeleted[]
+
+  @@unique([username, customerType])
+}
+
+model Customer {
+  id                        String                      @id @default(uuid()) @db.VarChar(36)
+  type                      CustomerType                @default(business)
+  name                      String                      @unique
+  active                    Boolean                     @default(true)
+  verifyBySms               Boolean                     @default(false)
+  createdAt                 DateTime                    @default(now())
+  updatedAt                 DateTime                    @default(now()) @updatedAt
+  users                     User[]
+  alertTypes                CustomerAlertType[]
+  district                  String
+  state                     String
+  country                   String
+  secretKey                 String?                     @unique
+  trialPeriod               Boolean?                    @default(false)
+  countryCode               String?
+  phoneLength               Int?
+  url                       String?
+  speed                     String?                     @db.VarChar(3)
+  notes                     String?                     @db.VarChar(100)
+  timezone                  String?
+  image                     Json?
+  isClient                  Boolean?                    @default(false)
+  parentId                  String?                     @db.VarChar(36)
+  updatedById               String                      @db.VarChar(36)
+  updatedBy                 User                        @relation(name: "updateBy", fields: [updatedById], references: [id])
+  parent                    Customer?                   @relation("CustomersRelations", fields: [parentId], references: [id])
+  customers                 Customer[]                  @relation("CustomersRelations")
+  integrations              CustomerIntegration?
+  settings                  CustomerSettings?
+  alertStates               AlertState[]
+  reservationTypes          ReservationType[]
+  eventCategories           CustomerEventCategory[]
+  eventStates               EventState[]
+  eventTypes                EventType[]
+  cameras                   Camera[]
+  locations                 Location[]
+  protocols                 Protocol[]
+  usefulInformations        UsefulInformation[]
+  lots                      Lot[]
+  reservationSpaces         ReservationSpace[]
+  reservationModes          ReservationMode[]
+  customerLots              CustomerLot[]
+  authorizedUsers           AuthorizedUser[]
+  events                    Event[]                     @relation("EventCustomer")
+  reservations              Reservation[]               @relation("ReservationCustomer")
+  EventAuthorizationRequest EventAuthorizationRequest[]
+  alerts                    Alert[]                     @relation("AlertCustomer")
+  alertParents              Alert[]                     @relation("AlertParentCustomer")
+  monitoringCustomers       MonitoringCustomer[]
+  notifications             Notification[]              @relation("NotificationCustomer")
+  notificationCustomers     NotificationCustomer[]
+  notificationTemplates     NotificationTemplate[]
+  sections                  CustomerSections?
+  customerHolidays          CustomerHolidays[]
+  reservationLocks          ReservationLock[]
+  neighborhoodAlarms        NeighborhoodAlarm[]
+  icmService                ICMService[]
+  userDeleted               UserDeleted[]
+}
+
+model AlertState {
+  id         String    @id @default(uuid()) @db.VarChar(36)
+  name       String
+  active     Boolean   @default(true)
+  customerId String?   @db.VarChar(36)
+  customer   Customer? @relation(fields: [customerId], references: [id])
+  alerts     Alert[]
+}
+
+model AlertType {
+  id                String              @id @default(uuid()) @db.VarChar(36)
+  type              String
+  name              String
+  customerAlertType CustomerAlertType[]
+  userPermissions   UserPermission[]
+  alerts            Alert[]
+  contactAlertTypes ContactAlertType[]
+}
+
+model CustomerAlertType {
+  customerId  String    @db.VarChar(36)
+  alertTypeId String    @db.VarChar(36)
+  order       Int
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  alertType   AlertType @relation(fields: [alertTypeId], references: [id])
+
+  @@id([customerId, alertTypeId])
+}
+
+model PasswordRecoveryToken {
+  id        String   @id @default(uuid()) @db.VarChar(36)
+  userId    String   @unique @db.VarChar(36)
+  token     String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model ReservationType {
+  id                        String                          @id @default(uuid()) @db.VarChar(36)
+  code                      String                          @db.VarChar(10)
+  customerId                String                          @db.VarChar(36)
+  days                      Int?
+  customer                  Customer                        @relation(fields: [customerId], references: [id])
+  display                   String
+  groupCode                 String
+  numberOfPending           Int?
+  active                    Boolean                         @default(true)
+  createdAt                 DateTime                        @default(now())
+  updatedAt                 DateTime                        @default(now()) @updatedAt
+  minDays                   Int?
+  maxPerMonth               Int?
+  minDaysBetweenReservation Int?
+  termsAndConditions        Boolean                         @default(false)
+  pendingPerLot             Boolean                         @default(false)
+  allowsSimultaneous        Boolean                         @default(false)
+  requireConfirmation       Boolean                         @default(false)
+  daysSecondTime            Int?
+  eventCategories           CustomerEventCategory[]
+  reservationSpaces         ReservationSpace[]
+  reservationModes          ReservationMode[]
+  authorizedUsers           AuthorizedUserReservationType[]
+  reservations              Reservation[]                   @relation("ReservationResevationType")
+  reservationLocks          ReservationLock[]
+
+  @@unique([code, customerId])
+}
+
+model EventType {
+  id                           String                      @id @default(uuid()) @db.VarChar(36)
+  code                         String
+  title                        String
+  lotFrom                      String?
+  lotTo                        String?
+  additionalNotifications      String?
+  qrFormat                     Int?
+  description                  Boolean                     @default(false)
+  attachment                   Boolean                     @default(false)
+  monitor                      Boolean                     @default(false)
+  addToStatistics              Boolean                     @default(false)
+  notifyUser                   Boolean                     @default(false)
+  notifySecurityChief          Boolean                     @default(false)
+  notifySecurityGuard          Boolean                     @default(false)
+  autoCancelAfterExpired       Boolean                     @default(false)
+  allowsMultipleAuthorized     Boolean                     @default(false)
+  requiresDni                  Boolean                     @default(false)
+  isPermanent                  Boolean                     @default(false)
+  emergency                    Boolean                     @default(false)
+  requiresPatent               Boolean                     @default(false)
+  generateQr                   Boolean                     @default(false)
+  reservation                  Boolean                     @default(false)
+  notifyGiroVision             Boolean                     @default(false)
+  active                       Boolean                     @default(true)
+  customerId                   String                      @db.VarChar(36)
+  isDelivery                   Boolean                     @default(false)
+  icmDeliveryType              String?
+  gvEntryTypeId                Int?
+  gvGuestTypeId                Int?
+  updatedById                  String                      @db.VarChar(36)
+  eventCategoryId              String?                     @db.VarChar(36)
+  visitorsUserPermission       UserPermission[]            @relation("VisitorsEventTypeRelation")
+  authorizationsUserPermission UserPermission[]            @relation("AuthorizationEventTypeRelation")
+  customer                     Customer                    @relation(fields: [customerId], references: [id])
+  eventCategory                CustomerEventCategory?      @relation(fields: [eventCategoryId], references: [id])
+  updatedBy                    User                        @relation(fields: [updatedById], references: [id])
+  userPermissions              UserPermission[]
+  reservationSpaces            ReservationSpace[]
+  events                       Event[]                     @relation("EventEventType")
+  EventAuthorizationRequest    EventAuthorizationRequest[]
+
+  @@unique([code, customerId])
+}
+
+model EventState {
+  id           String        @id @default(uuid()) @db.VarChar(36)
+  name         String
+  active       Boolean       @default(true)
+  customerId   String?       @db.VarChar(36)
+  customer     Customer?     @relation(fields: [customerId], references: [id])
+  events       Event[]       @relation("EventEventState")
+  reservations Reservation[] @relation("ReservationEventState")
+}
+
+model EventCategory {
+  id                      String                  @id @default(uuid()) @db.VarChar(36)
+  title                   String
+  active                  Boolean                 @default(true)
+  image                   Json?
+  customerEventCategories CustomerEventCategory[]
+}
+
+model UserPermission {
+  id                       String               @id @default(uuid()) @db.VarChar(36)
+  userId                   String               @unique @db.VarChar(36)
+  createdAt                DateTime             @default(now())
+  updatedAt                DateTime             @default(now()) @updatedAt
+  alerts                   Boolean              @default(false)
+  events                   Boolean              @default(false)
+  notifications            Boolean              @default(false)
+  users                    Boolean              @default(false)
+  configurations           Boolean              @default(false)
+  authorizedUsers          Boolean              @default(false)
+  cameras                  Boolean              @default(false)
+  alertStates              Boolean              @default(false)
+  eventTypes               Boolean              @default(false)
+  eventStates              Boolean              @default(false)
+  eventKey                 Boolean              @default(false)
+  usefulInformation        Boolean              @default(false)
+  protocols                Boolean              @default(false)
+  statesmanEvents          Boolean              @default(false)
+  reservations             Boolean              @default(false)
+  lots                     Boolean              @default(false)
+  locations                Boolean              @default(false)
+  integrations             Boolean              @default(false)
+  receiveEvents            Boolean              @default(false)
+  createEvents             Boolean              @default(false)
+  createReservations       Boolean              @default(false)
+  sendNotification         Boolean              @default(false)
+  panicButton              Boolean              @default(false)
+  enableTraccar            Boolean              @default(false)
+  enableCybermapa          Boolean              @default(false)
+  visitorsQueue            Boolean              @default(false)
+  requestAuthorization     Boolean              @default(false)
+  monitoringAlertTypes     AlertType[]
+  monitoringEventTypes     EventType[]
+  visitorsEventTypeId      String?              @db.VarChar(36)
+  authorizationEventTypeId String?              @db.VarChar(36)
+  visitorsEventType        EventType?           @relation("VisitorsEventTypeRelation", fields: [visitorsEventTypeId], references: [id])
+  authorizationEventType   EventType?           @relation("AuthorizationEventTypeRelation", fields: [authorizationEventTypeId], references: [id])
+  user                     User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  monitoringCustomers      MonitoringCustomer[]
+}
+
+model MonitoringCustomer {
+  id               String         @id @default(uuid()) @db.VarChar(36)
+  UserPermission   UserPermission @relation(fields: [userPermissionId], references: [id])
+  userPermissionId String         @db.VarChar(36)
+  customer         Customer       @relation(fields: [customerId], references: [id])
+  customerId       String         @db.VarChar(36)
+}
+
+model CustomerSections {
+  id                String   @id @default(uuid()) @db.VarChar(36)
+  alerts            Boolean  @default(true)
+  events            Boolean  @default(true)
+  notifications     Boolean  @default(true)
+  reservations      Boolean  @default(true)
+  protocols         Boolean  @default(true)
+  usefulInformation Boolean  @default(true)
+  integrations      Boolean  @default(true)
+  lots              Boolean  @default(true)
+  cameras           Boolean  @default(true)
+  locations         Boolean  @default(true)
+  customerId        String   @unique @db.VarChar(36)
+  customer          Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+model CustomerIntegration {
+  id                    String   @id @default(uuid()) @db.VarChar(36)
+  customerId            String   @unique @db.VarChar(36)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @default(now()) @updatedAt
+  customer              Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  updatedById           String   @db.VarChar(36)
+  updatedBy             User     @relation(name: "CustomerIntegrationUserUpdateBy", fields: [updatedById], references: [id])
+  traccarUsername       String?
+  traccarPassword       String?
+  traccarUrl            String?
+  icmUrl                String?
+  icmToken              String?
+  giroVisionId          String?
+  neighborhoodAlarm     Boolean?
+  neighborhoodAlarmLink String?
+  neighborhoodAlarmKey  String?
+  cybermapaUrl          String?
+  cybermapaPassword     String?
+  cybermapaUsername     String?
+}
+
+model CustomerSettings {
+  id                        String   @id @default(uuid()) @db.VarChar(36)
+  customerId                String   @unique @db.VarChar(36)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @default(now()) @updatedAt
+  customer                  Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  updatedById               String   @db.VarChar(36)
+  updatedBy                 User     @relation(name: "CustomerSettingsUserUpdateBy", fields: [updatedById], references: [id])
+  minAccuracy               Int?
+  maxAccuracy               Int?
+  perimeterViolationNumbers String?
+  alarmActivatedNumbers     String?
+  badCompanyNumbers         String?
+  panicNumbers              String?
+  publicViolenceNumbers     String?
+  kidnappingNumbers         String?
+  fireNumbers               String?
+  healthEmergencyNumbers    String?
+  genderViolenceNumbers     String?
+  robberyNumbers            String?
+  fire                      String?
+  healthEmergency           String?
+  robbery                   String?
+  publicViolence            String?
+  securityGuard             String?
+  securityChief             String?
+  additionalNotifications   String?
+  panicKey                  Json?
+  panicNotifications        String?
+  reservationEmail          String?
+  receiveAlertsFromOutside  Boolean  @default(false)
+  daysToShow                String?
+  validateUsers             Boolean  @default(false)
+  doubleConfirmRequired     Boolean  @default(false)
+  doubleConfirmMessage      String?  @db.VarChar(521)
+}
+
+model CustomerEventCategory {
+  id                String           @id @default(uuid()) @db.VarChar(36)
+  order             Int?
+  active            Boolean          @default(true)
+  categoryId        String           @db.VarChar(36)
+  customerId        String           @db.VarChar(36)
+  category          EventCategory    @relation(fields: [categoryId], references: [id])
+  customer          Customer         @relation(fields: [customerId], references: [id])
+  reservationTypeId String?          @db.VarChar(36)
+  reservationType   ReservationType? @relation(fields: [reservationTypeId], references: [id])
+  updatedById       String           @db.VarChar(36)
+  updatedBy         User             @relation(fields: [updatedById], references: [id])
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @default(now()) @updatedAt
+  eventTypes        EventType[]
+}
+
+model Camera {
+  id          String   @id @default(uuid()) @db.VarChar(36)
+  active      Boolean  @default(true)
+  code        String
+  description String?
+  geolocation Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  updatedById String   @db.VarChar(36)
+  updatedBy   User     @relation(fields: [updatedById], references: [id])
+  customerId  String   @db.VarChar(36)
+  customer    Customer @relation(fields: [customerId], references: [id])
+  url         String?
+
+  @@unique([code, customerId])
+}
+
+enum LocationType {
+  locality
+  neighborhood
+}
+
+model Location {
+  id            String         @id @default(uuid()) @db.VarChar(36)
+  active        Boolean        @default(true)
+  name          String
+  type          LocationType
+  updatedById   String         @db.VarChar(36)
+  updatedBy     User           @relation(fields: [updatedById], references: [id])
+  customerId    String         @db.VarChar(36)
+  customer      Customer       @relation(fields: [customerId], references: [id])
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @default(now()) @updatedAt
+  notifications Notification[]
+  alerts        Alert[]
+}
+
+model Protocol {
+  id          String   @id @default(uuid()) @db.VarChar(36)
+  active      Boolean  @default(true)
+  title       String
+  code        String
+  attachment  Json?
+  customerId  String   @db.VarChar(36)
+  customer    Customer @relation(fields: [customerId], references: [id])
+  updatedById String   @db.VarChar(36)
+  updatedBy   User     @relation(fields: [updatedById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+}
+
+model UsefulInformation {
+  id                 String              @id @default(uuid()) @db.VarChar(36)
+  code               String
+  title              String
+  attachment         Json?
+  active             Boolean             @default(true)
+  isCategory         Boolean             @default(false)
+  categoryId         String?             @db.VarChar(36)
+  category           UsefulInformation?  @relation("UsefulRelations", fields: [categoryId], references: [id])
+  link               String?
+  description        String?             @db.Text()
+  customerId         String              @db.VarChar(36)
+  customer           Customer            @relation(fields: [customerId], references: [id])
+  updatedById        String              @db.VarChar(36)
+  updatedBy          User                @relation(fields: [updatedById], references: [id])
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @default(now()) @updatedAt
+  usefulInformations UsefulInformation[] @relation("UsefulRelations")
+}
+
+model Lot {
+  id          String   @id @default(uuid()) @db.VarChar(36)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  latitude    String
+  longitude   String
+  lot         String
+  active      Boolean  @default(true)
+  isArea      Boolean  @default(false)
+  updatedById String   @db.VarChar(36)
+  updatedBy   User     @relation(fields: [updatedById], references: [id])
+  customerId  String   @db.VarChar(36)
+  customer    Customer @relation(fields: [customerId], references: [id])
+
+  @@unique([lot, customerId])
+}
+
+model ReservationSpace {
+  id                 String                            @id @default(uuid()) @db.VarChar(36)
+  code               String
+  schedule           Json
+  interval           Int?
+  notifyParticipants Boolean                           @default(false)
+  active             Boolean                           @default(true)
+  additionalNumbers  String?                           @db.Text()
+  customerId         String                            @db.VarChar(36)
+  customer           Customer                          @relation(fields: [customerId], references: [id])
+  createdAt          DateTime                          @default(now())
+  updatedAt          DateTime                          @default(now()) @updatedAt
+  eventType          EventType                         @relation(fields: [eventTypeId], references: [id])
+  reservationType    ReservationType                   @relation(fields: [reservationTypeId], references: [id])
+  eventTypeId        String                            @db.VarChar(36)
+  reservationTypeId  String                            @db.VarChar(36)
+  reservationModes   ReservationSpaceReservationMode[]
+  reservations       Reservation[]                     @relation("ReservationReservationSpace")
+  reservationLocks   ReservationLock[]
+}
+
+model ReservationMode {
+  id                      String                            @id @default(uuid()) @db.VarChar(36)
+  name                    String
+  maxDuration             Int?
+  maxPeople               Int?
+  active                  Boolean                           @default(true)
+  attachList              Boolean                           @default(false)
+  allowGuests             Boolean                           @default(false)
+  allParticipantsRequired Boolean                           @default(false)
+  inactivityTime          Int?
+  createdAt               DateTime                          @default(now())
+  updatedAt               DateTime                          @default(now()) @updatedAt
+  maxPerMonth             Int?
+  email                   String?
+  reservationTypeId       String                            @db.VarChar(36)
+  reservationType         ReservationType                   @relation(fields: [reservationTypeId], references: [id])
+  customerId              String                            @db.VarChar(36)
+  updatedById             String                            @db.VarChar(36)
+  updatedBy               User                              @relation(fields: [updatedById], references: [id])
+  customer                Customer                          @relation(fields: [customerId], references: [id])
+  reservationSpaces       ReservationSpaceReservationMode[]
+  reservations            Reservation[]                     @relation("ReservationReservationMode")
+}
+
+model ReservationSpaceReservationMode {
+  reservationModeId  String           @db.VarChar(36)
+  reservationMode    ReservationMode  @relation(fields: [reservationModeId], references: [id])
+  reservationSpaceId String           @db.VarChar(36)
+  reservationSpace   ReservationSpace @relation(fields: [reservationSpaceId], references: [id])
+
+  @@id([reservationModeId, reservationSpaceId])
+}
+
+model CustomerLot {
+  id         String    @id @default(uuid()) @db.VarChar(36)
+  lot        String?
+  icmLot     String?
+  icmUid     String?   @db.VarChar(36)
+  customerId String?   @db.VarChar(36)
+  customer   Customer? @relation(fields: [customerId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @default(now()) @updatedAt
+}
+
+model Reservation {
+  id                 String              @id @default(uuid()) @db.VarChar(36)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @default(now()) @updatedAt
+  fromDate           DateTime
+  toDate             DateTime
+  trialPeriod        Boolean             @default(false)
+  inactiveToDate     DateTime?
+  cancelDate         DateTime?
+  numberOfGuests     Int?
+  createdById        String
+  createdBy          User                @relation("ReservationCreatedBy", fields: [createdById], references: [id])
+  lot                String?             @db.VarChar(512)
+  userId             String?
+  user               User?               @relation("ReservationUser", fields: [userId], references: [id])
+  authorizedUserId   String?
+  authorizedUser     AuthorizedUser?     @relation("ReservationAuthorizedUser", fields: [authorizedUserId], references: [id])
+  customerId         String
+  customer           Customer            @relation("ReservationCustomer", fields: [customerId], references: [id])
+  reservationTypeId  String
+  reservationType    ReservationType     @relation("ReservationResevationType", fields: [reservationTypeId], references: [id])
+  reservationModeId  String
+  reservationMode    ReservationMode     @relation("ReservationReservationMode", fields: [reservationModeId], references: [id])
+  reservationSpaceId String
+  reservationSpace   ReservationSpace    @relation("ReservationReservationSpace", fields: [reservationSpaceId], references: [id])
+  eventStateId       String
+  eventState         EventState          @relation("ReservationEventState", fields: [eventStateId], references: [id])
+  file               Json?
+  noUser             Boolean             @default(false)
+  events             Event[]
+  reservationGuests  ReservationGuests[]
+}
+
+model AuthorizedUser {
+  id                        String                          @id @default(uuid()) @db.VarChar(36)
+  firstName                 String?
+  lastName                  String?
+  username                  String
+  lot                       String?
+  description               String?                         @db.Text()
+  sendEvents                Boolean?
+  active                    Boolean                         @default(true)
+  customerId                String                          @db.VarChar(36)
+  customer                  Customer                        @relation(fields: [customerId], references: [id])
+  updatedById               String                          @db.VarChar(36)
+  updatedBy                 User                            @relation(fields: [updatedById], references: [id])
+  createdAt                 DateTime                        @default(now())
+  updatedAt                 DateTime                        @default(now()) @updatedAt
+  expireDate                DateTime?
+  isOwner                   Boolean?                        @default(true)
+  reservationTypes          AuthorizedUserReservationType[]
+  userAuthorizedUser        User[]                          @relation("UserAuthorizedUser")
+  events                    Event[]                         @relation("EventAuthorizedUser")
+  reservations              Reservation[]                   @relation("ReservationAuthorizedUser")
+  EventAuthorizationRequest EventAuthorizationRequest[]
+  reservationGuests         ReservationGuests[]
+  additionalLots            String?                         @db.Text()
+  userDeleted               UserDeleted[]
+
+  @@unique([username, customerId])
+}
+
+model AuthorizedUserReservationType {
+  id                String          @id @default(uuid()) @db.VarChar(36)
+  authorizedUserId  String
+  authorizedUser    AuthorizedUser  @relation(fields: [authorizedUserId], references: [id])
+  reservationTypeId String
+  reservationType   ReservationType @relation(fields: [reservationTypeId], references: [id])
+}
+
+model Event {
+  id               String          @id @default(uuid()) @db.VarChar(36)
+  from             DateTime
+  to               DateTime
+  fullName         String?         @db.VarChar(512)
+  description      String?         @db.VarChar(512)
+  observations     String?         @db.VarChar(512)
+  lot              String?         @db.VarChar(512)
+  changeLog        String          @db.Text()
+  eventStateId     String?
+  eventState       EventState?     @relation("EventEventState", fields: [eventStateId], references: [id])
+  eventTypeId      String?
+  eventType        EventType?      @relation("EventEventType", fields: [eventTypeId], references: [id])
+  userId           String?
+  user             User?           @relation("EventUser", fields: [userId], references: [id])
+  customerId       String          @db.VarChar(36)
+  customer         Customer        @relation("EventCustomer", fields: [customerId], references: [id])
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @default(now()) @updatedAt
+  file             Json?
+  dni              String?         @db.VarChar(512)
+  isPermanent      Boolean         @default(false)
+  isCopy           Boolean         @default(false)
+  statesmanId      String?
+  statesman        User?           @relation("EventUserStatesman", fields: [statesmanId], references: [id])
+  authorizedUserId String?
+  authorizedUser   AuthorizedUser? @relation("EventAuthorizedUser", fields: [authorizedUserId], references: [id])
+  monitorId        String?
+  monitor          User?           @relation("EventUserMonitor", fields: [monitorId], references: [id])
+  firstName        String?         @db.VarChar(512)
+  lastName         String?         @db.VarChar(512)
+  patent           String?         @db.VarChar(512)
+  qrCode           String?         @db.Text()
+  token            String?         @db.VarChar(36)
+  qrPending        Boolean         @default(false)
+  isDelivery       Boolean         @default(false)
+  trialPeriod      Boolean         @default(false)
+  externalId       String?         @db.VarChar(36)
+  reservationId    String?         @db.VarChar(36)
+  reservation      Reservation?    @relation(fields: [reservationId], references: [id])
+  notifications    Notification[]
+}
+
+model EventAuthorizationRequest {
+  id               String          @id @default(uuid()) @db.VarChar(36)
+  sentBySms        Boolean         @default(false)
+  text             String?         @db.VarChar(512)
+  authorized       String?         @db.VarChar(512)
+  lot              String?         @db.VarChar(512)
+  confirmed        Boolean         @default(false)
+  rejected         Boolean         @default(false)
+  userId           String?         @db.VarChar(36)
+  trialPeriod      Boolean         @default(false)
+  user             User?           @relation("EventAuthorizationRequestUser", fields: [userId], references: [id])
+  monitorId        String          @db.VarChar(36)
+  monitor          User            @relation("EventAuthorizationRequestMonitor", fields: [monitorId], references: [id])
+  customerId       String          @db.VarChar(36)
+  customer         Customer        @relation(fields: [customerId], references: [id])
+  eventTypeId      String          @db.VarChar(36)
+  eventType        EventType       @relation(fields: [eventTypeId], references: [id])
+  authorizedUserId String?         @db.VarChar(36)
+  authorizedUser   AuthorizedUser? @relation(fields: [authorizedUserId], references: [id])
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @default(now()) @updatedAt
+  notifications    Notification[]
+}
+
+model Alert {
+  id                  String             @id @default(uuid()) @db.VarChar(36)
+  code                String?            @db.VarChar(15)
+  alertTypeId         String             @db.VarChar(36)
+  city                String?
+  district            String?
+  state               String?
+  country             String?
+  neighborhoodId      String?            @db.VarChar(36)
+  neighborhood        Location?          @relation(fields: [neighborhoodId], references: [id])
+  attachment          Json?
+  originalGeolocation Json?
+  manual              Boolean            @default(false)
+  dragged             Boolean?
+  alertType           AlertType          @relation(fields: [alertTypeId], references: [id])
+  geolocation         Json
+  approximateAddress  String?            @db.VarChar(512)
+  alertStateId        String             @db.VarChar(36)
+  alertState          AlertState         @relation(fields: [alertStateId], references: [id])
+  userId              String             @db.VarChar(36)
+  user                User               @relation(fields: [userId], references: [id])
+  alertStateUpdatedAt DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @default(now()) @updatedAt
+  customerId          String             @db.VarChar(36)
+  customer            Customer           @relation("AlertCustomer", fields: [customerId], references: [id])
+  geolocations        Json?
+  observations        String?            @db.VarChar(512)
+  parentId            String?            @db.VarChar(36)
+  parent              Customer?          @relation("AlertParentCustomer", fields: [parentId], references: [id])
+  trialPeriod         Boolean            @default(false)
+  neighborhoodAlarmId String?            @db.VarChar(36)
+  neighborhoodAlarm   NeighborhoodAlarm? @relation(fields: [neighborhoodAlarmId], references: [id])
+  checkpoints         Checkpoint[]
+  notifications       Notification[]
+  externalService     ExternalService[]
+}
+
+model Notification {
+  id                      String                     @id @default(uuid()) @db.VarChar(36)
+  title                   String                     @db.VarChar(512)
+  description             String                     @db.Text()
+  image                   Json?
+  userId                  String                     @db.VarChar(36)
+  user                    User                       @relation("NotificationSenderUser", fields: [userId], references: [id])
+  customerId              String                     @db.VarChar(36)
+  customer                Customer                   @relation("NotificationCustomer", fields: [customerId], references: [id])
+  authorizationRequestId  String?                    @db.VarChar(36)
+  authorizationRequest    EventAuthorizationRequest? @relation(fields: [authorizationRequestId], references: [id])
+  locationId              String?                    @db.VarChar(36)
+  location                Location?                  @relation(fields: [locationId], references: [id])
+  notificationType        NotificationType
+  emergency               Boolean                    @default(false)
+  trialPeriod             Boolean                    @default(false)
+  createdAt               DateTime                   @default(now())
+  sendAt                  DateTime?                  @default(now())
+  fromLot                 String?                    @db.VarChar(32)
+  toLot                   String?                    @db.VarChar(32)
+  alertId                 String?                    @db.VarChar(36)
+  eventId                 String?                    @db.VarChar(36)
+  alert                   Alert?                     @relation(fields: [alertId], references: [id])
+  event                   Event?                     @relation(fields: [eventId], references: [id])
+  toUsers                 NotificationUser[]
+  additionalNotifications NotificationCustomer[]
+}
+
+model NotificationCustomer {
+  id             String       @id @default(uuid()) @db.VarChar(36)
+  notificationId String       @db.VarChar(36)
+  customerId     String       @db.VarChar(36)
+  customer       Customer     @relation(fields: [customerId], references: [id])
+  notification   Notification @relation(fields: [notificationId], references: [id])
+}
+
+model NotificationTemplate {
+  id          String   @id @default(uuid()) @db.VarChar(36)
+  title       String   @db.VarChar(512)
+  description String   @db.Text()
+  active      Boolean  @default(true)
+  customerId  String   @db.VarChar(36)
+  customer    Customer @relation(fields: [customerId], references: [id])
+  image       Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+}
+
+model NotificationUser {
+  id             String       @id @default(uuid()) @db.VarChar(36)
+  read           Boolean      @default(false)
+  userId         String       @db.VarChar(36)
+  user           User         @relation(fields: [userId], references: [id])
+  notificationId String       @db.VarChar(36)
+  notification   Notification @relation(fields: [notificationId], references: [id])
+  createdAt      DateTime     @default(now())
+}
+
+model Contact {
+  id                String             @id @default(uuid()) @db.VarChar(36)
+  phoneNumber       String             @db.VarChar(32)
+  deviceContact     Json?
+  contactUserId     String?
+  contactUser       User?              @relation("ContactContactUser", fields: [contactUserId], references: [id])
+  userId            String
+  user              User?              @relation("ContactUser", fields: [userId], references: [id])
+  contactAlertTypes ContactAlertType[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @default(now()) @updatedAt
+
+  @@unique([phoneNumber, userId])
+}
+
+model ContactAlertType {
+  id          String    @id @default(uuid()) @db.VarChar(36)
+  contact     Contact   @relation(fields: [contactId], references: [id])
+  contactId   String    @db.VarChar(36)
+  alertType   AlertType @relation(fields: [alertTypeId], references: [id])
+  alertTypeId String    @db.VarChar(36)
+}
+
+model Checkpoint {
+  id          String   @id @default(uuid()) @db.VarChar(36)
+  geolocation Json
+  alertId     String   @db.VarChar(36)
+  alert       Alert    @relation(fields: [alertId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+}
+
+model CustomerHolidays {
+  id         String   @id @default(uuid()) @db.VarChar(36)
+  date       DateTime
+  customerId String   @db.VarChar(36)
+  active     Boolean  @default(true)
+  customer   Customer @relation(fields: [customerId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+}
+
+model ReservationLock {
+  id                 String           @id @default(uuid()) @db.VarChar(36)
+  name               String?
+  active             Boolean          @default(true)
+  ignoreIfHoliday    Boolean          @default(false)
+  date               DateTime?
+  sun                Json?
+  mon                Json?
+  tue                Json?
+  wed                Json?
+  thu                Json?
+  fri                Json?
+  sat                Json?
+  holiday            Json?
+  holidayEve         Json?
+  customerId         String           @db.VarChar(36)
+  customer           Customer         @relation(fields: [customerId], references: [id])
+  reservationSpaceId String           @db.VarChar(36)
+  reservationSpace   ReservationSpace @relation(fields: [reservationSpaceId], references: [id])
+  reservationTypeId  String           @db.VarChar(36)
+  reservationType    ReservationType  @relation(fields: [reservationTypeId], references: [id])
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @default(now()) @updatedAt
+}
+
+model ReservationGuests {
+  id               String          @id @default(uuid()) @db.VarChar(36)
+  fullName         String?         @db.VarChar(512)
+  removed          Boolean         @default(false)
+  userId           String?
+  user             User?           @relation(fields: [userId], references: [id])
+  authorizedUserId String?         @db.VarChar(36)
+  authorizedUser   AuthorizedUser? @relation(fields: [authorizedUserId], references: [id])
+  reservationId    String          @db.VarChar(36)
+  reservation      Reservation     @relation(fields: [reservationId], references: [id])
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @default(now()) @updatedAt
+}
+
+model ExternalService {
+  id          String   @id @default(uuid()) @db.VarChar(36)
+  attributes  Json?
+  geolocation Json?
+  name        String?
+  description String?
+  type        String?
+  url         String?
+  active      Boolean  @default(false)
+  removed     Boolean  @default(false)
+  uniqueId    String?  @db.VarChar(36)
+  alertId     String   @db.VarChar(36)
+  alert       Alert    @relation(fields: [alertId], references: [id])
+  service     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+}
+
+model Cron {
+  id              String   @id @default(uuid()) @db.VarChar(36)
+  modifiedRecords Int?
+  message         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+}
+
+model SmsProvider {
+  id          String   @id @default(uuid()) @db.VarChar(36)
+  provider    String
+  description String?
+  active      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+}
+
+model NeighborhoodAlarm {
+  id                     String                   @id @default(uuid()) @db.VarChar(36)
+  urgencyNumber          String?
+  approximateAddress     String?
+  geolocation            Json?
+  userId                 String
+  user                   User                     @relation(fields: [userId], references: [id])
+  customerId             String                   @db.VarChar(36)
+  customer               Customer                 @relation(fields: [customerId], references: [id])
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @default(now()) @updatedAt
+  neighborhoodAlarmUsers NeighborhoodAlarmUsers[]
+  alerts                 Alert[]
+}
+
+model NeighborhoodAlarmUsers {
+  id                  String            @id @default(uuid()) @db.VarChar(36)
+  userId              String
+  user                User              @relation(fields: [userId], references: [id])
+  neighborhoodAlarmId String
+  neighborhoodAlarm   NeighborhoodAlarm @relation(fields: [neighborhoodAlarmId], references: [id])
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @default(now()) @updatedAt
+}
+
+model ICMService {
+  id                String   @id @default(uuid()) @db.VarChar(36)
+  request           String?
+  response          String?
+  externalReference String?
+  customerId        String
+  customer          Customer @relation(fields: [customerId], references: [id])
+  eventId           String?  @db.VarChar(36)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now()) @updatedAt
+}
+
+model UserDeleted {
+  id                  String          @id @default(uuid()) @db.VarChar(36)
+  username            String
+  deletionRequestedAt DateTime
+  deletedAt           DateTime?
+  customerId          String
+  customer            Customer        @relation(fields: [customerId], references: [id])
+  userId              String
+  user                User            @relation(fields: [userId], references: [id])
+  authorizedUserId    String?
+  authorizedUser      AuthorizedUser? @relation(fields: [authorizedUserId], references: [id])
+}

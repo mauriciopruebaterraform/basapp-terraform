@@ -1,0 +1,4 @@
+export const errorCodes = {
+  SERVICE_NOT_FOUND: 'SERVICE_NOT_FOUND',
+  INVALID_ALERT: 'INVALID_ALERT',
+};

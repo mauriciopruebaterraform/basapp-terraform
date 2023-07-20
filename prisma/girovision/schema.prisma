@@ -1,0 +1,47 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL_GIROVISION")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../node_modules/.prisma/girovision-client"
+}
+
+model invitados {
+  id                 Int       @id @default(autoincrement())
+  id_consorcio       Int?
+  uf                 String?   @db.VarChar(512)
+  txt_nombre         String?   @db.VarChar(512)
+  txt_documento      String?   @db.VarChar(512)
+  txt_patente        String?   @db.VarChar(512)
+  txt_marca_veh      String?   @db.VarChar(512)
+  txt_motivo         String?   @db.VarChar(512)
+  fec_valido_desde   DateTime? @db.Date()
+  cant_dias_valido   Int?
+  id_tipo_entrada    Int?      @default(1)
+  id_tipo_invitado   Int?      @default(1)
+  id_tipo_reingreso  Int?      @default(1)
+  id_tipo_ingreso    Int?      @default(1)
+  fec_carga          DateTime? @db.DateTime()
+  fec_ingreso        DateTime? @db.DateTime()
+  fec_bajada         DateTime? @db.DateTime()
+  avisar_propietario String?   @db.VarChar(512)
+  basapp_read_date   DateTime? @db.DateTime()
+  basapp_id          String?   @db.VarChar(512)
+
+  @@index([id_tipo_invitado, id_consorcio])
+}
+
+model ufsocios {
+  id                Int       @id @default(autoincrement())
+  id_consorcio      Int?
+  fecha_moficacion  DateTime?
+  fecha_eliminacion DateTime? @db.DateTime()
+  momento           DateTime? @db.DateTime()
+  nombre            String?   @db.VarChar(512)
+  uf                String?   @db.VarChar(512)
+}
