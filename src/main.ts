@@ -68,7 +68,6 @@ async function bootstrap() {
     type: VersioningType.URI,
   });
 
-  // Set the validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
